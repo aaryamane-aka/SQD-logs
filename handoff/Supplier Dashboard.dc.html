@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; }
+    a { color: #2f5fb3; text-decoration: none; }
+    a:hover { color: #1d3f80; text-decoration: underline; }
+    select, input, textarea, button { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    select:focus, input:focus, textarea:focus { outline: 2px solid #2f5fb3; outline-offset: 1px; }
+  </style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;background:#f5f6f8;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#1c2230;">
+
+  <div style="width:230px;flex-shrink:0;background:#12203f;color:#dbe4f5;display:flex;flex-direction:column;padding:24px 16px;gap:4px;">
+    <div style="font-size:15px;font-weight:700;color:#fff;padding:0 8px 20px;line-height:1.3;">SQD Supplier<br/>Dashboard</div>
+    <sc-for list="{{ tabsView }}" as="t" hint-placeholder-count="9">
+      <div onClick="{{ t.onClick }}" style="padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13.5px;font-weight:500;background:{{ t.bg }};color:{{ t.color }};">{{ t.label }}</div>
+    </sc-for>
+
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #26365c;">
+      <div style="font-size:11px;color:#8ea3c9;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">View as</div>
+      <div style="display:flex;gap:6px;">
+        <button onClick="{{ setRoleInternal }}" style="flex:1;padding:6px 4px;border-radius:6px;border:1px solid #2c4372;background:{{ internalBtnBg }};color:{{ internalBtnColor }};font-size:11.5px;cursor:pointer;">Internal SQD</button>
+        <button onClick="{{ setRoleSupplier }}" style="flex:1;padding:6px 4px;border-radius:6px;border:1px solid #2c4372;background:{{ supplierBtnBg }};color:{{ supplierBtnColor }};font-size:11.5px;cursor:pointer;">Supplier</button>
+      </div>
+      <sc-if value="{{ isSupplier }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:10px;">
+          <div style="font-size:11px;color:#8ea3c9;margin-bottom:4px;">I am...</div>
+          <select value="{{ mySupplierId }}" onChange="{{ setMySupplierId }}" style="width:100%;padding:6px;border-radius:6px;border:1px solid #2c4372;background:#0d1830;color:#dbe4f5;font-size:12.5px;">
+            <option value="">Select supplier</option>
+            <sc-for list="{{ supplierOptionItems }}" as="opt" hint-placeholder-count="3">
+              <option value="{{ opt.value }}">{{ opt.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="flex:1;padding:28px 36px;overflow-x:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+      <div style="font-size:22px;font-weight:700;">{{ activeTabLabel }}</div>
+      <sc-if value="{{ canAddActive }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onAddClick }}" style="padding:10px 18px;border-radius:7px;border:none;background:#2f5fb3;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">{{ addButtonLabel }}</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ contentBlocked }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px;background:#eaf0fb;border:1px solid #c7d7f0;border-radius:8px;color:#2f5fb3;font-size:13.5px;">Select which supplier you are in the sidebar to see your data.</div>
+    </sc-if>
+
+    <sc-if value="{{ showContent }}" hint-placeholder-val="{{ true }}">
+
+      <sc-if value="{{ isOverviewTab }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ hasScorecard }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;">
+            <div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:16px;">
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Suppliers Tracked</div>
+              <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:24px;font-weight:600;">{{ portfolio.count }}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:16px;">
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Rated A</div>
+              <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:24px;font-weight:600;color:#1f8a5c;">{{ portfolio.ratedA }}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:16px;">
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Rated D (At Risk)</div>
+              <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:24px;font-weight:600;color:#c23b3b;">{{ portfolio.ratedD }}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:16px;">
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Avg PPM</div>
+              <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:24px;font-weight:600;">{{ portfolio.avgPPM }}</div>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e5ea;border-radius:10px;padding:16px;">
+              <div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Avg OTD %</div>
+              <div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:24px;font-weight:600;">{{ portfolio.avgOTD }}</div>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;background:#fff;border:1px solid #e2e5ea;border-radius:10px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Supplier</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Crit.</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Avg PPM</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Target</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">PPM Status</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Avg OTD</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Target</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">OTD Status</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Open Compl.</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Critical</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Audit Score</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Audit Rtg</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Reviews On-Time</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">APQP Status</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Overall Score</th>
+                  <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ scorecard }}" as="row" hint-placeholder-count="3">
+                  <tr>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600;white-space:nowrap;">{{ row.name }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;">{{ row.criticality }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-family:'SFMono-Regular',Consolas,monospace;white-space:nowrap;">{{ row.avgPPM }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-family:'SFMono-Regular',Consolas,monospace;color:#6b7280;white-space:nowrap;">{{ row.targetPPM }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600;white-space:nowrap;color:{{ row.ppmStatusColor }};">{{ row.ppmStatus }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-family:'SFMono-Regular',Consolas,monospace;white-space:nowrap;">{{ row.avgOTD }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-family:'SFMono-Regular',Consolas,monospace;color:#6b7280;white-space:nowrap;">{{ row.targetOTD }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600;white-space:nowrap;color:{{ row.otdStatusColor }};">{{ row.otdStatus }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;">{{ row.openComplaints }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:600;white-space:nowrap;color:{{ row.criticalColor }};">{{ row.criticalComplaints }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;">{{ row.auditScore }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:700;white-space:nowrap;color:{{ row.auditRatingColor }};">{{ row.auditRating }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;">{{ row.reviewsOnTime }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;">{{ row.apqpSummary }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-family:'SFMono-Regular',Consolas,monospace;font-weight:600;white-space:nowrap;">{{ row.overallScore }}</td>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;font-weight:700;white-space:nowrap;color:{{ row.ratingColor }};">{{ row.overallRating }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noScorecard }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px;text-align:center;background:#fff;border:1px dashed #d7dbe2;border-radius:10px;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:#1c2230;">No suppliers yet</div>
+            <div style="font-size:13px;color:#6b7280;">Go to the Suppliers tab to add your first supplier and start tracking quality data.</div>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isDataTab }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ needsSuppliersFirst }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 14px;background:#fdf3e2;border:1px solid #f0dcae;border-radius:8px;color:#8a5b06;font-size:13px;margin-bottom:14px;">Add at least one supplier in the Suppliers tab before logging data here.</div>
+        </sc-if>
+        <sc-if value="{{ table.hasRows }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto;background:#fff;border:1px solid #e2e5ea;border-radius:10px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead>
+                <tr>
+                  <sc-for list="{{ table.columns }}" as="col" hint-placeholder-count="6">
+                    <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e2e5ea;color:#6b7280;font-weight:600;white-space:nowrap;">{{ col }}</th>
+                  </sc-for>
+                  <th style="padding:10px 12px;border-bottom:1px solid #e2e5ea;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ table.rows }}" as="row" hint-placeholder-count="4">
+                  <tr>
+                    <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="6">
+                      <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;">{{ cell }}</td>
+                    </sc-for>
+                    <td style="padding:9px 12px;border-bottom:1px solid #eef0f3;white-space:nowrap;text-align:right;">
+                      <sc-if value="{{ row.canEdit }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ row.onEdit }}" style="border:none;background:none;color:#2f5fb3;cursor:pointer;font-size:12px;font-weight:600;margin-right:8px;padding:0;">Edit</button>
+                      </sc-if>
+                      <sc-if value="{{ row.canDelete }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ row.onDelete }}" style="border:none;background:none;color:#c23b3b;cursor:pointer;font-size:12px;font-weight:600;padding:0;">Delete</button>
+                      </sc-if>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+        <sc-if value="{{ table.noRows }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:40px;text-align:center;color:#6b7280;background:#fff;border:1px dashed #d7dbe2;border-radius:10px;font-size:13.5px;">No records yet. Click "Add" above to log the first one.</div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ isReportTab }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ noMonths }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:60px;text-align:center;background:#fff;border:1px dashed #d7dbe2;border-radius:10px;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:#1c2230;">Nothing to report yet</div>
+            <div style="font-size:13px;color:#6b7280;">Add Monthly PPM or Delivery Performance entries to generate a monthly report.</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasMonths }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+            <label style="font-size:13px;color:#6b7280;">Report month</label>
+            <select value="{{ reportMonth }}" onChange="{{ onReportMonthChange }}" style="padding:8px 10px;border-radius:6px;border:1px solid #d7dbe2;font-size:13px;">
+              <option value="">Select month</option>
+              <sc-for list="{{ availableMonths }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt.value }}">{{ opt.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+
+          <sc-if value="{{ hasReportSlides }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:920px;">
+              <div style="aspect-ratio:16/9;background:#0d1b34;border-radius:14px;color:#fff;padding:48px;display:flex;flex-direction:column;box-shadow:0 20px 40px -20px rgba(20,30,60,.35);position:relative;overflow:hidden;">
+
+                <sc-if value="{{ isTitleSlide }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin:auto;text-align:center;">
+                    <div style="font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:#8ea3c9;margin-bottom:14px;">Supplier Quality &amp; Development</div>
+                    <div style="font-size:36px;font-weight:700;margin-bottom:10px;">Monthly Report</div>
+                    <div style="font-size:18px;color:#c3d0e8;">{{ currentSlide.monthLabel }}</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ isSummarySlide }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#8ea3c9;margin-bottom:24px;">Portfolio Summary — {{ currentSlide.monthLabel }}</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+                      <div><div style="font-size:12px;color:#8ea3c9;">Suppliers Reporting</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.supplierCount }}</div></div>
+                      <div><div style="font-size:12px;color:#8ea3c9;">Portfolio PPM</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.portfolioPPM }}</div></div>
+                      <div><div style="font-size:12px;color:#8ea3c9;">Portfolio OTD</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.portfolioOTD }}</div></div>
+                      <div><div style="font-size:12px;color:#8ea3c9;">Complaints Raised</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.complaintsCount }}</div></div>
+                      <div><div style="font-size:12px;color:#8ea3c9;">Critical Complaints</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;color:#ff9c9c;">{{ currentSlide.criticalCount }}</div></div>
+                      <div><div style="font-size:12px;color:#8ea3c9;">Audits This Month</div><div style="font-size:32px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.auditsCount }}</div></div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ isScorecardSlide }}" hint-placeholder-val="{{ false }}">
+                  <div style="width:100%;">
+                    <div style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#8ea3c9;margin-bottom:24px;">Overall Score by Supplier — {{ currentSlide.monthLabel }}</div>
+                    <sc-for list="{{ currentSlide.bars }}" as="b" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <div style="width:180px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ b.name }}</div>
+                        <div style="flex:1;height:16px;background:#152847;border-radius:8px;overflow:hidden;">
+                          <div style="height:100%;border-radius:8px;background:{{ b.ratingColor }};width:{{ b.widthPctStr }};"></div>
+                        </div>
+                        <div style="width:60px;font-size:12px;font-family:'SFMono-Regular',Consolas,monospace;text-align:right;">{{ b.scoreDisplay }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ isSupplierSlide }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;">
+                      <div style="font-size:24px;font-weight:700;">{{ currentSlide.supplierName }}</div>
+                      <div style="font-size:13px;color:#8ea3c9;">Criticality {{ currentSlide.criticality }}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                      <div style="width:60px;font-size:11px;color:#8ea3c9;">PPM</div>
+                      <div style="flex:1;height:12px;background:#152847;border-radius:6px;position:relative;">
+                        <div style="position:absolute;left:0;top:0;height:100%;background:#ff9c9c;border-radius:6px;width:{{ currentSlide.ppmActualPctStr }};"></div>
+                        <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:{{ currentSlide.ppmTargetPctStr }};"></div>
+                      </div>
+                      <div style="width:110px;font-size:12px;font-family:'SFMono-Regular',Consolas,monospace;text-align:right;">{{ currentSlide.ppm }} <span style="color:#6f86ad;">/ {{ currentSlide.ppmTarget }}</span></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+                      <div style="width:60px;font-size:11px;color:#8ea3c9;">OTD</div>
+                      <div style="flex:1;height:12px;background:#152847;border-radius:6px;position:relative;">
+                        <div style="position:absolute;left:0;top:0;height:100%;background:#7fb3ff;border-radius:6px;width:{{ currentSlide.otdActualPctStr }};"></div>
+                        <div style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;left:{{ currentSlide.otdTargetPctStr }};"></div>
+                      </div>
+                      <div style="width:110px;font-size:12px;font-family:'SFMono-Regular',Consolas,monospace;text-align:right;">{{ currentSlide.otd }} <span style="color:#6f86ad;">/ {{ currentSlide.otdTarget }}</span></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:20px;">
+                      <div><div style="font-size:11px;color:#8ea3c9;">Complaints</div><div style="font-size:24px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.complaintsCount }}</div></div>
+                      <div><div style="font-size:11px;color:#8ea3c9;">Audits</div><div style="font-size:24px;font-weight:700;font-family:'SFMono-Regular',Consolas,monospace;">{{ currentSlide.auditsCount }}</div></div>
+                      <div><div style="font-size:11px;color:#8ea3c9;">APQP Parts</div><div style="font-size:15px;font-weight:600;padding-top:5px;">{{ currentSlide.apqpSummary }}</div></div>
+                      <div><div style="font-size:11px;color:#8ea3c9;">Overall Score</div><div style="font-size:15px;font-weight:600;padding-top:5px;">{{ currentSlide.overallScore }} ({{ currentSlide.overallRating }})</div></div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ isClosingSlide }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin:auto;text-align:center;">
+                    <div style="font-size:22px;font-weight:700;margin-bottom:10px;">Thank you</div>
+                    <div style="font-size:13px;color:#8ea3c9;">Generated from live SQD supplier data</div>
+                  </div>
+                </sc-if>
+
+                <div style="position:absolute;bottom:20px;right:28px;font-size:11px;color:#5c7099;font-family:'SFMono-Regular',Consolas,monospace;">{{ slideIndexLabel }}</div>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;margin-top:14px;">
+                <button onClick="{{ onPrevSlide }}" style="padding:8px 16px;border-radius:6px;border:1px solid #d7dbe2;background:#fff;cursor:pointer;font-size:13px;">← Previous</button>
+                <div style="font-size:12px;color:#6b7280;align-self:center;">Ask me to export this report as a PowerPoint file when you're ready.</div>
+                <button onClick="{{ onNextSlide }}" style="padding:8px 16px;border-radius:6px;border:1px solid #d7dbe2;background:#fff;cursor:pointer;font-size:13px;">Next →</button>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
+      </sc-if>
+
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hasModal }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(15,20,35,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;">
+      <div style="background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">
+        <div style="font-size:17px;font-weight:700;margin-bottom:18px;">{{ modal.title }}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <sc-for list="{{ modal.fields }}" as="f" hint-placeholder-count="6">
+            <div style="display:flex;flex-direction:column;gap:5px;grid-column:{{ f.span }};">
+              <label style="font-size:12px;color:#6b7280;font-weight:600;">{{ f.label }}</label>
+              <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="padding:8px 10px;border-radius:6px;border:1px solid #d7dbe2;font-size:13px;">
+                  <sc-for list="{{ f.optionItems }}" as="opt" hint-placeholder-count="3">
+                    <option value="{{ opt.value }}">{{ opt.label }}</option>
+                  </sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ f.isSupplier }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="padding:8px 10px;border-radius:6px;border:1px solid #d7dbe2;font-size:13px;">
+                  <option value="">Select supplier</option>
+                  <sc-for list="{{ f.optionItems }}" as="opt" hint-placeholder-count="3">
+                    <option value="{{ opt.value }}">{{ opt.label }}</option>
+                  </sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ f.isTextarea }}" hint-placeholder-val="{{ false }}">
+                <textarea value="{{ f.value }}" onChange="{{ f.onChange }}" style="padding:8px 10px;border-radius:6px;border:1px solid #d7dbe2;font-size:13px;min-height:60px;resize:vertical;"></textarea>
+              </sc-if>
+              <sc-if value="{{ f.isPlain }}" hint-placeholder-val="{{ false }}">
+                <input type="{{ f.inputType }}" value="{{ f.value }}" onChange="{{ f.onChange }}" style="padding:8px 10px;border-radius:6px;border:1px solid #d7dbe2;font-size:13px;" />
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;">
+          <button onClick="{{ modal.onCancel }}" style="padding:9px 18px;border-radius:6px;border:1px solid #d7dbe2;background:#fff;cursor:pointer;font-size:13px;">Cancel</button>
+          <button onClick="{{ modal.onSave }}" style="padding:9px 18px;border-radius:6px;border:none;background:#2f5fb3;color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static SCHEMAS = {
+    suppliers: { label: 'Supplier', listKey: 'suppliers', idPrefix: 'SUP', fields: [
+      { key: 'name', label: 'Supplier Name', type: 'text' },
+      { key: 'commodity', label: 'Commodity', type: 'text' },
+      { key: 'category', label: 'Category', type: 'select', options: ['Direct Material', 'Indirect Material', 'Service'] },
+      { key: 'location', label: 'Location', type: 'text' },
+      { key: 'criticality', label: 'Criticality', type: 'select', options: ['A', 'B', 'C'] },
+      { key: 'onboardDate', label: 'Onboard Date', type: 'date' },
+      { key: 'sqeOwner', label: 'SQE Owner', type: 'text' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Probation', 'Inactive'] },
+    ]},
+    technicalReviews: { label: 'Technical Review', listKey: 'technicalReviews', idPrefix: 'TR', fields: [
+      { key: 'supplierId', label: 'Supplier', type: 'supplier' },
+      { key: 'reviewType', label: 'Review Type', type: 'select', options: ['PPAP', 'Design Review', 'Process Review', 'New Product Intro'] },
+      { key: 'plannedDate', label: 'Planned Date', type: 'date' },
+      { key: 'actualDate', label: 'Actual Date', type: 'date' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Scheduled', 'In Progress', 'Closed', 'Overdue'] },
+      { key: 'reviewer', label: 'Reviewer', type: 'text' },
+      { key: 'keyFindings', label: 'Key Findings', type: 'textarea' },
+      { key: 'actionItems', label: 'Action Items', type: 'textarea' },
+      { key: 'targetClosure', label: 'Target Closure', type: 'date' },
+      { key: 'actualClosure', label: 'Actual Closure', type: 'date' },
+    ]},
+    qualityComplaints: { label: 'Complaint', listKey: 'qualityComplaints', idPrefix: 'QC', fields: [
+      { key: 'dateRaised', label: 'Date Raised', type: 'date' },
+      { key: 'supplierId', label: 'Supplier', type: 'supplier' },
+      { key: 'partNo', label: 'Part No.', type: 'text' },
+      { key: 'defectDescription', label: 'Defect Description', type: 'textarea' },
+      { key: 'qtyRcvd', label: 'Qty Received', type: 'number' },
+      { key: 'qtyRej', label: 'Qty Rejected', type: 'number' },
+      { key: 'severity', label: 'Severity', type: 'select', options: ['Minor', 'Major', 'Critical'] },
+      { key: 'rootCause', label: 'Root Cause', type: 'textarea' },
+      { key: 'correctiveAction', label: 'Corrective Action', type: 'textarea' },
+      { key: 'targetClose', label: 'Target Close', type: 'date' },
+      { key: 'actualClose', label: 'Actual Close', type: 'date' },
+      { key: 'status', label: '8D Status', type: 'select', options: ['Open', 'In Progress', 'Closed'] },
+    ]},
+    monthlyPPM: { label: 'PPM Entry', listKey: 'monthlyPPM', idPrefix: null, fields: [
+      { key: 'supplierId', label: 'Supplier', type: 'supplier' },
+      { key: 'month', label: 'Month', type: 'month' },
+      { key: 'qtyReceived', label: 'Qty Received', type: 'number' },
+      { key: 'qtyRejected', label: 'Qty Rejected', type: 'number' },
+      { key: 'targetPPM', label: 'Target PPM', type: 'number' },
+    ]},
+    deliveryPerformance: { label: 'OTD Entry', listKey: 'deliveryPerformance', idPrefix: null, fields: [
+      { key: 'supplierId', label: 'Supplier', type: 'supplier' },
+      { key: 'month', label: 'Month', type: 'month' },
+      { key: 'ordersDue', label: 'Orders Due', type: 'number' },
+      { key: 'ordersOnTime', label: 'Orders On-Time', type: 'number' },
+      { key: 'targetOTD', label: 'Target OTD %', type: 'number' },
+    ]},
+    supplierAudits: { label: 'Audit', listKey: 'supplierAudits', idPrefix: 'AU', fields: [
+      { key: 'supplierId', label: 'Supplier', type: 'supplier' },
+      { key: 'auditType', label: 'Audit Type', type: 'select', options: ['System Audit (IATF 16949)', 'System Audit (ISO 9001)', 'Process Audit', 'Product Audit', 'MQS Audit'] },
+      { key: 'plannedDate', label: 'Planned Date', type: 'date' },
+      { key: 'actualDate', label: 'Actual Date', type: 'date' },
+      { key: 'auditor', label: 'Auditor', type: 'text' },
+      { key: 'score', label: 'Score (%)', type: 'number' },
+      { key: 'majorNCs', label: 'Major NCs', type: 'number' },
+      { key: 'minorNCs', label: 'Minor NCs', type: 'number' },
+      { key: 'capaDue', label: 'CAPA Due', type: 'date' },
+      { key: 'capaStatus', label: 'CAPA Status', type: 'select', options: ['Open', 'In Progress', 'Closed'] },
+      { key: 'nextAuditDue', label: 'Next Audit Due', type: 'date' },
+    ]},
+    apqpParts: { label: 'APQP Part', listKey: 'apqpParts', idPrefix: 'APQP', fields: [
+      { key: 'supplierId', label: 'Supplier Name', type: 'text' },
+      { key: 'partName', label: 'Part Name', type: 'text' },
+      { key: 'partNo', label: 'Part Number', type: 'text' },
+      { key: 'projectName', label: 'Project Name', type: 'text' },
+      { key: 'plant', label: 'Manufacturing Plant', type: 'text' },
+      { key: 'kickoffPlan', label: 'Project Kickoff — Plan', type: 'date' },
+      { key: 'kickoffActual', label: 'Project Kickoff — Actual', type: 'date' },
+      { key: 'offToolPlan', label: 'Off Tool Sample — Plan', type: 'date' },
+      { key: 'offToolActual', label: 'Off Tool Sample — Actual', type: 'date' },
+      { key: 'ppapPlan', label: 'PPAP — Plan', type: 'date' },
+      { key: 'ppapActual', label: 'PPAP — Actual', type: 'date' },
+      { key: 'runAtRatePlan', label: 'Run at Rate — Plan', type: 'date' },
+      { key: 'runAtRateActual', label: 'Run at Rate — Actual', type: 'date' },
+      { key: 'sopPlan', label: 'SOP — Plan', type: 'date' },
+      { key: 'sopActual', label: 'SOP — Actual', type: 'date' },
+      { key: 'status', label: 'Current Status', type: 'select', options: ['Not Started', 'On Track', 'At Risk', 'Delayed', 'Complete'] },
+    ]},
+  };
+
+  static ROLE_PERMS = {
+    suppliers: { add: false, edit: false, del: false },
+    technicalReviews: { add: false, edit: true, del: false },
+    qualityComplaints: { add: true, edit: true, del: false },
+    monthlyPPM: { add: true, edit: true, del: false },
+    deliveryPerformance: { add: true, edit: true, del: false },
+    supplierAudits: { add: false, edit: false, del: false },
+    apqpParts: { add: false, edit: true, del: false },
+  };
+
+  static TABLIST = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'suppliers', label: 'Suppliers' },
+    { key: 'technicalReviews', label: 'Technical Reviews' },
+    { key: 'qualityComplaints', label: 'Quality Complaints' },
+    { key: 'monthlyPPM', label: 'Monthly PPM' },
+    { key: 'deliveryPerformance', label: 'Delivery Performance' },
+    { key: 'supplierAudits', label: 'Supplier Audits' },
+    { key: 'apqpParts', label: 'APQP Parts' },
+    { key: 'monthlyReport', label: 'Monthly Report' },
+  ];
+
+  state = {
+    role: 'internal',
+    mySupplierId: '',
+    activeTab: 'overview',
+    suppliers: [], technicalReviews: [], qualityComplaints: [], monthlyPPM: [], deliveryPerformance: [], supplierAudits: [], apqpParts: [],
+    modal: null,
+    reportMonth: '',
+    reportSlideIndex: 0,
+  };
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem('sqd_dashboard_v1');
+      if (raw) {
+        const d = JSON.parse(raw);
+        this.setState({
+          suppliers: d.suppliers || [], technicalReviews: d.technicalReviews || [], qualityComplaints: d.qualityComplaints || [],
+          monthlyPPM: d.monthlyPPM || [], deliveryPerformance: d.deliveryPerformance || [], supplierAudits: d.supplierAudits || [], apqpParts: d.apqpParts || [],
+        });
+      }
+    } catch (e) {}
+  }
+
+  persist() {
+    const { suppliers, technicalReviews, qualityComplaints, monthlyPPM, deliveryPerformance, supplierAudits, apqpParts } = this.state;
+    try { localStorage.setItem('sqd_dashboard_v1', JSON.stringify({ suppliers, technicalReviews, qualityComplaints, monthlyPPM, deliveryPerformance, supplierAudits, apqpParts })); } catch (e) {}
+  }
+
+  uid() { return 'id' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+  nextDisplayId(type) {
+    const schema = Component.SCHEMAS[type];
+    if (!schema.idPrefix) return null;
+    const list = this.state[schema.listKey];
+    let max = 0;
+    list.forEach(r => { const m = /(\d+)$/.exec(r.displayId || ''); if (m) max = Math.max(max, parseInt(m[1], 10)); });
+    return `${schema.idPrefix}-${String(max + 1).padStart(3, '0')}`;
+  }
+
+  canAdd(type) { return this.state.role === 'internal' ? true : !!Component.ROLE_PERMS[type].add; }
+  canEdit(type) { return this.state.role === 'internal' ? true : !!Component.ROLE_PERMS[type].edit; }
+  canDelete(type) { return this.state.role === 'internal' ? true : !!Component.ROLE_PERMS[type].del; }
+
+  defaultValues(type) {
+    const schema = Component.SCHEMAS[type];
+    const v = {};
+    schema.fields.forEach(f => { v[f.key] = ''; });
+    if (this.state.role === 'supplier' && v.hasOwnProperty('supplierId')) {
+      if (type === 'apqpParts') {
+        const s = this.state.suppliers.find(x => x.uid === this.state.mySupplierId);
+        v.supplierId = s ? s.name : '';
+      } else {
+        v.supplierId = this.state.mySupplierId;
+      }
+    }
+    return v;
+  }
+
+  openAddModal(type) { this.setState({ modal: { type, mode: 'add', uid: null, values: this.defaultValues(type) } }); }
+
+  openEditModal(type, uid) {
+    const schema = Component.SCHEMAS[type];
+    const rec = this.state[schema.listKey].find(r => r.uid === uid);
+    if (!rec) return;
+    const values = {};
+    schema.fields.forEach(f => { values[f.key] = rec[f.key]; });
+    this.setState({ modal: { type, mode: 'edit', uid, values } });
+  }
+
+  closeModal() { this.setState({ modal: null }); }
+
+  setModalField(key, value) { this.setState(s => ({ modal: { ...s.modal, values: { ...s.modal.values, [key]: value } } })); }
+
+  saveModal() {
+    const { type, mode, uid, values } = this.state.modal;
+    const schema = Component.SCHEMAS[type];
+    const clean = { ...values };
+    schema.fields.forEach(f => { if (f.type === 'number') clean[f.key] = (clean[f.key] === '' || clean[f.key] == null) ? 0 : parseFloat(clean[f.key]); });
+    this.setState(s => {
+      const list = [...s[schema.listKey]];
+      if (mode === 'add') {
+        list.push({ uid: this.uid(), displayId: this.nextDisplayId(type), ...clean });
+      } else {
+        const idx = list.findIndex(r => r.uid === uid);
+        if (idx > -1) list[idx] = { ...list[idx], ...clean };
+      }
+      return { [schema.listKey]: list, modal: null };
+    }, () => this.persist());
+  }
+
+  deleteRecord(type, uid) {
+    const schema = Component.SCHEMAS[type];
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm('Delete this record?')) return;
+    this.setState(s => ({ [schema.listKey]: s[schema.listKey].filter(r => r.uid !== uid) }), () => this.persist());
+  }
+
+  fmtDate(iso) { if (!iso) return '—'; const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return iso; return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }); }
+  fmtMonth(m) { if (!m) return '—'; const [y, mo] = m.split('-'); const d = new Date(parseInt(y, 10), parseInt(mo, 10) - 1, 1); return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); }
+  quarterOf(m) { if (!m) return '—'; const parts = m.split('-').map(Number); return `Q${Math.ceil(parts[1] / 3)} ${parts[0]}`; }
+  diffDays(a, b) { if (!a || !b) return null; return Math.round((new Date(a) - new Date(b)) / 86400000); }
+  ratingFromScore(score) { if (score == null || isNaN(score)) return '—'; return score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'D'; }
+  ratingColor(r) { return r === 'A' ? '#1f8a5c' : r === 'B' ? '#2f6fb3' : r === 'C' ? '#b4790a' : r === 'D' ? '#c23b3b' : '#6b7280'; }
+  supplierName(id) { const s = this.state.suppliers.find(x => x.uid === id); return s ? s.name : '—'; }
+
+  getEnrichedRows(type) {
+    const list = this.state[type] || [];
+    const filtered = this.state.role === 'supplier'
+      ? list.filter(r => {
+          if (type === 'suppliers') return r.uid === this.state.mySupplierId;
+          if (type === 'apqpParts') {
+            const mySupplier = this.state.suppliers.find(x => x.uid === this.state.mySupplierId);
+            return mySupplier && (r.supplierId || '').trim().toLowerCase() === mySupplier.name.trim().toLowerCase();
+          }
+          return r.supplierId === this.state.mySupplierId;
+        })
+      : list;
+    return filtered.map(r => {
+      const base = { ...r };
+      if (type === 'apqpParts') base.supplierName = r.supplierId || '—';
+      else if (type !== 'suppliers') base.supplierName = this.supplierName(r.supplierId);
+      if (type === 'technicalReviews') {
+        base.daysLate = r.status === 'Closed' ? this.diffDays(r.actualClosure, r.targetClosure) : (r.status === 'Overdue' ? this.diffDays(new Date().toISOString().slice(0, 10), r.targetClosure) : null);
+      }
+      if (type === 'qualityComplaints') {
+        base.daysOpen = this.diffDays(r.actualClose || new Date().toISOString().slice(0, 10), r.dateRaised);
+      }
+      if (type === 'monthlyPPM') {
+        base.ppm = r.qtyReceived > 0 ? (r.qtyRejected / r.qtyReceived * 1e6) : 0;
+        base.status = base.ppm <= r.targetPPM ? 'Within Target' : 'Exceeds Target';
+        base.quarter = this.quarterOf(r.month);
+      }
+      if (type === 'deliveryPerformance') {
+        base.otd = r.ordersDue > 0 ? (r.ordersOnTime / r.ordersDue * 100) : 0;
+        base.status = base.otd >= r.targetOTD ? 'Meets Target' : 'Below Target';
+        base.quarter = this.quarterOf(r.month);
+      }
+      if (type === 'supplierAudits') base.rating = this.ratingFromScore(r.score);
+      return base;
+    });
+  }
+
+  getColumnDefs(type) {
+    const S = v => (v == null || v === '') ? '—' : String(v);
+    const defs = {
+      suppliers: [
+        { label: 'ID', get: r => S(r.displayId) }, { label: 'Name', get: r => S(r.name) }, { label: 'Commodity', get: r => S(r.commodity) },
+        { label: 'Category', get: r => S(r.category) }, { label: 'Location', get: r => S(r.location) }, { label: 'Criticality', get: r => S(r.criticality) },
+        { label: 'Onboard Date', get: r => this.fmtDate(r.onboardDate) }, { label: 'SQE Owner', get: r => S(r.sqeOwner) }, { label: 'Status', get: r => S(r.status) },
+      ],
+      technicalReviews: [
+        { label: 'ID', get: r => S(r.displayId) }, { label: 'Supplier', get: r => S(r.supplierName) }, { label: 'Type', get: r => S(r.reviewType) },
+        { label: 'Planned', get: r => this.fmtDate(r.plannedDate) }, { label: 'Actual', get: r => this.fmtDate(r.actualDate) }, { label: 'Status', get: r => S(r.status) },
+        { label: 'Reviewer', get: r => S(r.reviewer) }, { label: 'Target Closure', get: r => this.fmtDate(r.targetClosure) }, { label: 'Actual Closure', get: r => this.fmtDate(r.actualClosure) },
+        { label: 'Days Late', get: r => r.daysLate == null ? '—' : (r.daysLate > 0 ? `+${r.daysLate}` : String(r.daysLate)) },
+      ],
+      qualityComplaints: [
+        { label: 'ID', get: r => S(r.displayId) }, { label: 'Date Raised', get: r => this.fmtDate(r.dateRaised) }, { label: 'Supplier', get: r => S(r.supplierName) },
+        { label: 'Part No.', get: r => S(r.partNo) }, { label: 'Defect', get: r => S(r.defectDescription) }, { label: 'Qty Rej.', get: r => S(r.qtyRej) },
+        { label: 'Severity', get: r => S(r.severity) }, { label: 'Target Close', get: r => this.fmtDate(r.targetClose) }, { label: 'Actual Close', get: r => this.fmtDate(r.actualClose) },
+        { label: '8D Status', get: r => S(r.status) }, { label: 'Days Open', get: r => S(r.daysOpen) },
+      ],
+      monthlyPPM: [
+        { label: 'Supplier', get: r => S(r.supplierName) }, { label: 'Month', get: r => this.fmtMonth(r.month) }, { label: 'Qty Received', get: r => S(r.qtyReceived) },
+        { label: 'Qty Rejected', get: r => S(r.qtyRejected) }, { label: 'PPM', get: r => S(Math.round(r.ppm)) }, { label: 'Target PPM', get: r => S(r.targetPPM) },
+        { label: 'Status', get: r => S(r.status) }, { label: 'Quarter', get: r => S(r.quarter) },
+      ],
+      deliveryPerformance: [
+        { label: 'Supplier', get: r => S(r.supplierName) }, { label: 'Month', get: r => this.fmtMonth(r.month) }, { label: 'Orders Due', get: r => S(r.ordersDue) },
+        { label: 'On-Time', get: r => S(r.ordersOnTime) }, { label: 'OTD %', get: r => S(r.otd.toFixed(1)) + '%' }, { label: 'Target OTD %', get: r => S(r.targetOTD) + '%' },
+        { label: 'Status', get: r => S(r.status) }, { label: 'Quarter', get: r => S(r.quarter) },
+      ],
+      supplierAudits: [
+        { label: 'ID', get: r => S(r.displayId) }, { label: 'Supplier', get: r => S(r.supplierName) }, { label: 'Audit Type', get: r => S(r.auditType) },
+        { label: 'Planned', get: r => this.fmtDate(r.plannedDate) }, { label: 'Actual', get: r => this.fmtDate(r.actualDate) }, { label: 'Auditor', get: r => S(r.auditor) },
+        { label: 'Score', get: r => S(r.score) + '%' }, { label: 'Rating', get: r => S(r.rating) }, { label: 'Major NCs', get: r => S(r.majorNCs) },
+        { label: 'Minor NCs', get: r => S(r.minorNCs) }, { label: 'CAPA Status', get: r => S(r.capaStatus) }, { label: 'Next Audit Due', get: r => this.fmtDate(r.nextAuditDue) },
+      ],
+      apqpParts: [
+        { label: 'Supplier', get: r => S(r.supplierName) }, { label: 'Part Name', get: r => S(r.partName) }, { label: 'Part No.', get: r => S(r.partNo) },
+        { label: 'Project', get: r => S(r.projectName) }, { label: 'Plant', get: r => S(r.plant) },
+        { label: 'Kickoff (P/A)', get: r => `${this.fmtDate(r.kickoffPlan)} / ${this.fmtDate(r.kickoffActual)}` },
+        { label: 'Off-Tool Sample (P/A)', get: r => `${this.fmtDate(r.offToolPlan)} / ${this.fmtDate(r.offToolActual)}` },
+        { label: 'PPAP (P/A)', get: r => `${this.fmtDate(r.ppapPlan)} / ${this.fmtDate(r.ppapActual)}` },
+        { label: 'Run at Rate (P/A)', get: r => `${this.fmtDate(r.runAtRatePlan)} / ${this.fmtDate(r.runAtRateActual)}` },
+        { label: 'SOP (P/A)', get: r => `${this.fmtDate(r.sopPlan)} / ${this.fmtDate(r.sopActual)}` },
+        { label: 'Status', get: r => S(r.status) },
+      ],
+    };
+    return defs[type] || [];
+  }
+
+  buildTable(type) {
+    const rows = this.getEnrichedRows(type);
+    const cols = this.getColumnDefs(type);
+    const canEdit = this.canEdit(type), canDelete = this.canDelete(type);
+    const builtRows = rows.map(r => ({
+      uid: r.uid, cells: cols.map(c => c.get(r)), canEdit, canDelete,
+      onEdit: () => this.openEditModal(type, r.uid), onDelete: () => this.deleteRecord(type, r.uid),
+    }));
+    return { columns: cols.map(c => c.label), rows: builtRows, hasRows: builtRows.length > 0, noRows: builtRows.length === 0 };
+  }
+
+  buildScorecard(suppliersOverride) {
+    const suppliers = suppliersOverride || (this.state.role === 'supplier' ? this.state.suppliers.filter(s => s.uid === this.state.mySupplierId) : this.state.suppliers);
+    return suppliers.map(s => {
+      const ppmEntries = this.state.monthlyPPM.filter(r => r.supplierId === s.uid);
+      const sumRec = ppmEntries.reduce((a, r) => a + (r.qtyReceived || 0), 0);
+      const sumRej = ppmEntries.reduce((a, r) => a + (r.qtyRejected || 0), 0);
+      const avgPPM = ppmEntries.length ? (sumRec > 0 ? sumRej / sumRec * 1e6 : 0) : null;
+      const targetPPM = ppmEntries.length ? ppmEntries.reduce((a, r) => a + (r.targetPPM || 0), 0) / ppmEntries.length : null;
+      const ppmStatus = avgPPM == null ? '—' : (avgPPM <= targetPPM ? 'On Target' : 'Above Target');
+
+      const otdEntries = this.state.deliveryPerformance.filter(r => r.supplierId === s.uid);
+      const sumDue = otdEntries.reduce((a, r) => a + (r.ordersDue || 0), 0);
+      const sumOnTime = otdEntries.reduce((a, r) => a + (r.ordersOnTime || 0), 0);
+      const avgOTD = otdEntries.length ? (sumDue > 0 ? sumOnTime / sumDue * 100 : 0) : null;
+      const targetOTD = otdEntries.length ? otdEntries.reduce((a, r) => a + (r.targetOTD || 0), 0) / otdEntries.length : null;
+      const otdStatus = avgOTD == null ? '—' : (avgOTD >= targetOTD ? 'On Target' : 'Below Target');
+
+      const complaints = this.state.qualityComplaints.filter(r => r.supplierId === s.uid);
+      const openComplaints = complaints.filter(c => c.status !== 'Closed').length;
+      const criticalComplaints = complaints.filter(c => c.severity === 'Critical').length;
+
+      const audits = this.state.supplierAudits.filter(r => r.supplierId === s.uid);
+      const avgAuditScore = audits.length ? audits.reduce((a, r) => a + (r.score || 0), 0) / audits.length : null;
+      const auditRating = this.ratingFromScore(avgAuditScore);
+
+      const reviews = this.state.technicalReviews.filter(r => r.supplierId === s.uid);
+      const closedOrOverdue = reviews.filter(r => r.status === 'Closed' || r.status === 'Overdue');
+      const onTimeReviews = reviews.filter(r => r.status === 'Closed' && r.actualClosure && r.targetClosure && r.actualClosure <= r.targetClosure).length;
+      const reviewsOnTimePct = closedOrOverdue.length ? onTimeReviews / closedOrOverdue.length * 100 : null;
+
+      const apqp = this.state.apqpParts.filter(r => (r.supplierId || '').trim().toLowerCase() === (s.name || '').trim().toLowerCase());
+      const apqpAtRisk = apqp.filter(p => p.status === 'At Risk' || p.status === 'Delayed').length;
+      const apqpComplete = apqp.filter(p => p.status === 'Complete').length;
+      let apqpSummary = '—';
+      if (apqp.length) apqpSummary = apqpAtRisk > 0 ? `${apqpAtRisk} At Risk` : (apqpComplete === apqp.length ? 'All Complete' : `${apqpComplete}/${apqp.length} Complete`);
+
+      const subs = [];
+      if (avgPPM != null && targetPPM) subs.push({ w: 0.30, v: Math.max(0, Math.min(100, 100 - Math.max(0, (avgPPM - targetPPM) / targetPPM * 100))) });
+      if (avgOTD != null && targetOTD) subs.push({ w: 0.25, v: Math.max(0, Math.min(100, avgOTD / targetOTD * 100)) });
+      subs.push({ w: 0.15, v: Math.max(0, 100 - criticalComplaints * 25 - openComplaints * 10) });
+      if (avgAuditScore != null) subs.push({ w: 0.20, v: avgAuditScore });
+      if (reviewsOnTimePct != null) subs.push({ w: 0.10, v: reviewsOnTimePct });
+      const totalW = subs.reduce((a, x) => a + x.w, 0);
+      const overallScore = totalW > 0 ? subs.reduce((a, x) => a + x.v * x.w, 0) / totalW : null;
+      const overallRating = this.ratingFromScore(overallScore);
+
+      return { uid: s.uid, name: s.name, criticality: s.criticality, avgPPM, targetPPM, ppmStatus, avgOTD, targetOTD, otdStatus,
+        openComplaints, criticalComplaints, avgAuditScore, auditRating, reviewsOnTimePct, apqpSummary, overallScore, overallRating };
+    });
+  }
+
+  scorecardToDisplay(row) {
+    return {
+      uid: row.uid, name: row.name, criticality: row.criticality || '—',
+      avgPPM: row.avgPPM == null ? '—' : Math.round(row.avgPPM).toLocaleString(),
+      targetPPM: row.targetPPM == null ? '—' : Math.round(row.targetPPM).toLocaleString(),
+      ppmStatus: row.ppmStatus, ppmStatusColor: row.ppmStatus === 'Above Target' ? '#c23b3b' : row.ppmStatus === 'On Target' ? '#1f8a5c' : '#6b7280',
+      avgOTD: row.avgOTD == null ? '—' : row.avgOTD.toFixed(1) + '%',
+      targetOTD: row.targetOTD == null ? '—' : row.targetOTD.toFixed(1) + '%',
+      otdStatus: row.otdStatus, otdStatusColor: row.otdStatus === 'Below Target' ? '#c23b3b' : row.otdStatus === 'On Target' ? '#1f8a5c' : '#6b7280',
+      openComplaints: row.openComplaints, criticalComplaints: row.criticalComplaints, criticalColor: row.criticalComplaints > 0 ? '#c23b3b' : '#1c2230',
+      auditScore: row.avgAuditScore == null ? '—' : row.avgAuditScore.toFixed(0) + '%', auditRating: row.auditRating, auditRatingColor: this.ratingColor(row.auditRating),
+      reviewsOnTime: row.reviewsOnTimePct == null ? '—' : row.reviewsOnTimePct.toFixed(0) + '%',
+      apqpSummary: row.apqpSummary,
+      overallScore: row.overallScore == null ? '—' : row.overallScore.toFixed(1), overallRating: row.overallRating, ratingColor: this.ratingColor(row.overallRating),
+    };
+  }
+
+  buildPortfolioSummary(rawScorecard) {
+    const n = rawScorecard.length;
+    const withScore = rawScorecard.filter(s => s.overallScore != null);
+    const ratedA = rawScorecard.filter(s => s.overallRating === 'A').length;
+    const ratedD = rawScorecard.filter(s => s.overallRating === 'D').length;
+    const ppmVals = rawScorecard.filter(s => s.avgPPM != null);
+    const avgPPM = ppmVals.length ? ppmVals.reduce((a, s) => a + s.avgPPM, 0) / ppmVals.length : null;
+    const otdVals = rawScorecard.filter(s => s.avgOTD != null);
+    const avgOTD = otdVals.length ? otdVals.reduce((a, s) => a + s.avgOTD, 0) / otdVals.length : null;
+    return {
+      count: n, ratedA, ratedD,
+      avgPPM: avgPPM == null ? '—' : Math.round(avgPPM).toLocaleString(),
+      avgOTD: avgOTD == null ? '—' : avgOTD.toFixed(1) + '%',
+    };
+  }
+
+  getAvailableMonths() {
+    const set = new Set();
+    this.state.monthlyPPM.forEach(r => r.month && set.add(r.month));
+    this.state.deliveryPerformance.forEach(r => r.month && set.add(r.month));
+    return Array.from(set).sort();
+  }
+
+  buildReportSlides() {
+    const month = this.state.reportMonth;
+    if (!month) return [];
+    let suppliers = this.state.suppliers;
+    if (this.state.role === 'supplier') suppliers = suppliers.filter(s => s.uid === this.state.mySupplierId);
+    const monthPPM = this.state.monthlyPPM.filter(r => r.month === month);
+    const monthOTD = this.state.deliveryPerformance.filter(r => r.month === month);
+    const monthComplaints = this.state.qualityComplaints.filter(r => (r.dateRaised || '').slice(0, 7) === month);
+    const monthAudits = this.state.supplierAudits.filter(r => (r.actualDate || r.plannedDate || '').slice(0, 7) === month);
+    const rawScorecard = this.buildScorecard(suppliers);
+    const monthLabel = this.fmtMonth(month);
+
+    const sumRec = monthPPM.reduce((a, r) => a + (r.qtyReceived || 0), 0);
+    const sumRej = monthPPM.reduce((a, r) => a + (r.qtyRejected || 0), 0);
+    const portfolioPPM = sumRec > 0 ? Math.round(sumRej / sumRec * 1e6).toLocaleString() : '—';
+    const sumDue = monthOTD.reduce((a, r) => a + (r.ordersDue || 0), 0);
+    const sumOnTime = monthOTD.reduce((a, r) => a + (r.ordersOnTime || 0), 0);
+    const portfolioOTD = sumDue > 0 ? (sumOnTime / sumDue * 100).toFixed(1) + '%' : '—';
+
+    const slides = [];
+    slides.push({ kind: 'title', monthLabel });
+    slides.push({ kind: 'summary', monthLabel, supplierCount: suppliers.length, portfolioPPM, portfolioOTD,
+      complaintsCount: monthComplaints.length, criticalCount: monthComplaints.filter(c => c.severity === 'Critical').length, auditsCount: monthAudits.length });
+
+    const bars = rawScorecard.map(sc => {
+      const v = sc.overallScore == null ? 0 : Math.max(2, Math.round(sc.overallScore));
+      return { name: sc.name, widthPctStr: v + '%', scoreDisplay: sc.overallScore == null ? '—' : sc.overallScore.toFixed(1), ratingColor: this.ratingColor(sc.overallRating) };
+    });
+    slides.push({ kind: 'scorecardChart', monthLabel, bars });
+
+    suppliers.forEach(s => {
+      const ppm = monthPPM.find(r => r.supplierId === s.uid);
+      const otd = monthOTD.find(r => r.supplierId === s.uid);
+      const complaints = monthComplaints.filter(r => r.supplierId === s.uid);
+      const audits = monthAudits.filter(r => r.supplierId === s.uid);
+      const sc = rawScorecard.find(x => x.uid === s.uid);
+
+      const ppmNum = ppm ? (ppm.qtyReceived > 0 ? ppm.qtyRejected / ppm.qtyReceived * 1e6 : 0) : null;
+      const ppmTargetNum = ppm ? ppm.targetPPM : null;
+      const ppmMax = Math.max(ppmNum || 0, ppmTargetNum || 0, 1);
+      const otdNum = otd ? (otd.ordersDue > 0 ? otd.ordersOnTime / otd.ordersDue * 100 : 0) : null;
+      const otdTargetNum = otd ? otd.targetOTD : null;
+
+      slides.push({
+        kind: 'supplier', supplierName: s.name, criticality: s.criticality || '—',
+        ppm: ppmNum != null ? Math.round(ppmNum).toLocaleString() : '—',
+        ppmTarget: ppmTargetNum != null ? ppmTargetNum : '—',
+        otd: otdNum != null ? otdNum.toFixed(1) + '%' : '—',
+        otdTarget: otdTargetNum != null ? otdTargetNum + '%' : '—',
+        complaintsCount: complaints.length, auditsCount: audits.length,
+        apqpSummary: sc ? sc.apqpSummary : '—',
+        overallScore: sc && sc.overallScore != null ? sc.overallScore.toFixed(1) : '—', overallRating: sc ? sc.overallRating : '—',
+        hasPPM: ppmNum != null, hasOTD: otdNum != null,
+        ppmActualPctStr: ppmNum != null ? Math.max(2, Math.round(ppmNum / ppmMax * 100)) + '%' : '0%',
+        ppmTargetPctStr: ppmTargetNum != null ? Math.max(2, Math.round(ppmTargetNum / ppmMax * 100)) + '%' : '0%',
+        otdActualPctStr: otdNum != null ? Math.max(2, Math.min(100, Math.round(otdNum))) + '%' : '0%',
+        otdTargetPctStr: otdTargetNum != null ? Math.max(2, Math.min(100, Math.round(otdTargetNum))) + '%' : '0%',
+      });
+    });
+    slides.push({ kind: 'closing' });
+    return slides;
+  }
+
+  renderVals() {
+    const role = this.state.role;
+    const suppliers = this.state.suppliers;
+    const supplierOptionItems = suppliers.map(s => ({ value: s.uid, label: s.name }));
+    const activeTab = this.state.activeTab;
+
+    const tabsView = Component.TABLIST.map(t => ({
+      key: t.key, label: t.label,
+      bg: t.key === activeTab ? '#1d3a66' : 'transparent', color: t.key === activeTab ? '#fff' : '#c3d0e8',
+      onClick: () => this.setState({ activeTab: t.key }),
+    }));
+
+    const dataTabTypes = ['suppliers', 'technicalReviews', 'qualityComplaints', 'monthlyPPM', 'deliveryPerformance', 'supplierAudits', 'apqpParts'];
+    const isDataTab = dataTabTypes.includes(activeTab);
+    const isOverviewTab = activeTab === 'overview';
+    const isReportTab = activeTab === 'monthlyReport';
+    const table = isDataTab ? this.buildTable(activeTab) : null;
+
+    const contentBlocked = role === 'supplier' && !this.state.mySupplierId;
+    const showContent = !contentBlocked;
+    const canAddActive = isDataTab && !contentBlocked && this.canAdd(activeTab);
+    const needsSuppliersFirst = isDataTab && activeTab !== 'suppliers' && suppliers.length === 0;
+    const addButtonLabel = isDataTab ? 'Add ' + Component.SCHEMAS[activeTab].label : '';
+
+    const rawScorecard = this.buildScorecard();
+    const scorecard = rawScorecard.map(r => this.scorecardToDisplay(r));
+    const portfolio = this.buildPortfolioSummary(rawScorecard);
+
+    let modalView = null;
+    if (this.state.modal) {
+      const { type, mode, values } = this.state.modal;
+      const schema = Component.SCHEMAS[type];
+      const fields = schema.fields.map(f => {
+        const common = { key: f.key, label: f.label, value: values[f.key] ?? '', span: f.type === 'textarea' ? 'span 2' : 'span 1' };
+        if (f.type === 'select') return { ...common, isSelect: true, isSupplier: false, isTextarea: false, isPlain: false, optionItems: f.options.map(o => ({ value: o, label: o })), onChange: e => this.setModalField(f.key, e.target.value) };
+        if (f.type === 'supplier') return { ...common, isSelect: false, isSupplier: true, isTextarea: false, isPlain: false, optionItems: supplierOptionItems, onChange: e => this.setModalField(f.key, e.target.value) };
+        if (f.type === 'textarea') return { ...common, isSelect: false, isSupplier: false, isTextarea: true, isPlain: false, onChange: e => this.setModalField(f.key, e.target.value) };
+        return { ...common, isSelect: false, isSupplier: false, isTextarea: false, isPlain: true, inputType: f.type === 'month' ? 'month' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : 'text', onChange: e => this.setModalField(f.key, e.target.value) };
+      });
+      modalView = { title: (mode === 'add' ? 'Add ' : 'Edit ') + schema.label, fields, onSave: () => this.saveModal(), onCancel: () => this.closeModal() };
+    }
+
+    const availableMonthKeys = this.getAvailableMonths();
+    const availableMonths = availableMonthKeys.map(m => ({ value: m, label: this.fmtMonth(m) }));
+    const reportSlides = this.buildReportSlides();
+    const slideIdx = Math.min(this.state.reportSlideIndex, Math.max(0, reportSlides.length - 1));
+    const currentSlide = reportSlides[slideIdx] || {};
+
+    return {
+      role, setRoleInternal: () => this.setState({ role: 'internal' }), setRoleSupplier: () => this.setState({ role: 'supplier' }),
+      isSupplier: role === 'supplier',
+      internalBtnBg: role === 'internal' ? '#2f5fb3' : 'transparent', internalBtnColor: role === 'internal' ? '#fff' : '#c3d0e8',
+      supplierBtnBg: role === 'supplier' ? '#2f5fb3' : 'transparent', supplierBtnColor: role === 'supplier' ? '#fff' : '#c3d0e8',
+      mySupplierId: this.state.mySupplierId, supplierOptionItems,
+      setMySupplierId: e => this.setState({ mySupplierId: e.target.value }),
+      tabsView, activeTab,
+      activeTabLabel: (Component.TABLIST.find(t => t.key === activeTab) || {}).label,
+      isOverviewTab, isReportTab, isDataTab,
+      contentBlocked, showContent, canAddActive, needsSuppliersFirst, addButtonLabel, onAddClick: () => this.openAddModal(activeTab),
+      table,
+      scorecard, portfolio, hasScorecard: scorecard.length > 0, noScorecard: scorecard.length === 0,
+      modal: modalView, hasModal: !!modalView,
+      availableMonths, hasMonths: availableMonths.length > 0, noMonths: availableMonths.length === 0,
+      reportMonth: this.state.reportMonth, onReportMonthChange: e => this.setState({ reportMonth: e.target.value, reportSlideIndex: 0 }),
+      reportSlides, hasReportSlides: reportSlides.length > 0, currentSlide,
+      slideIndexLabel: reportSlides.length ? `${slideIdx + 1} / ${reportSlides.length}` : '',
+      isTitleSlide: currentSlide.kind === 'title', isSummarySlide: currentSlide.kind === 'summary', isScorecardSlide: currentSlide.kind === 'scorecardChart', isSupplierSlide: currentSlide.kind === 'supplier', isClosingSlide: currentSlide.kind === 'closing',
+      onPrevSlide: () => this.setState(s => ({ reportSlideIndex: Math.max(0, s.reportSlideIndex - 1) })),
+      onNextSlide: () => this.setState(s => ({ reportSlideIndex: Math.min(reportSlides.length - 1, s.reportSlideIndex + 1) })),
+    };
+  }
+}
+</script>
+</body>
+</html>
