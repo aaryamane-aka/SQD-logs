@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { RecordType, Supplier } from './types';
 import type { DashboardData } from './compute';
 import {
@@ -15,8 +16,20 @@ const S = (v: unknown) => (v == null || v === '' ? '—' : String(v));
 
 export interface ColumnDef {
   label: string;
-  get: (row: any) => string;
+  get: (row: any) => ReactNode;
 }
+
+const DOC_COLUMN: ColumnDef = {
+  label: 'Document',
+  get: (r) =>
+    r.doc_url ? (
+      <a href={r.doc_url} target="_blank" rel="noopener noreferrer">
+        View
+      </a>
+    ) : (
+      '—'
+    ),
+};
 
 export function getEnrichedRows(type: RecordType, data: DashboardData, suppliers: Supplier[]): any[] {
   switch (type) {
@@ -49,6 +62,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Onboard Date', get: (r) => fmtDate(r.onboard_date) },
       { label: 'SQE Owner', get: (r) => S(r.sqe_owner) },
       { label: 'Status', get: (r) => S(r.status) },
+      DOC_COLUMN,
     ],
     technical_reviews: [
       { label: 'ID', get: (r) => S(r.display_id) },
@@ -61,6 +75,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Target Closure', get: (r) => fmtDate(r.target_closure) },
       { label: 'Actual Closure', get: (r) => fmtDate(r.actual_closure) },
       { label: 'Days Late', get: (r) => (r.daysLate == null ? '—' : r.daysLate > 0 ? `+${r.daysLate}` : String(r.daysLate)) },
+      DOC_COLUMN,
     ],
     quality_complaints: [
       { label: 'ID', get: (r) => S(r.display_id) },
@@ -74,6 +89,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Actual Close', get: (r) => fmtDate(r.actual_close) },
       { label: '8D Status', get: (r) => S(r.status) },
       { label: 'Days Open', get: (r) => S(r.daysOpen) },
+      DOC_COLUMN,
     ],
     monthly_ppm: [
       { label: 'Supplier', get: (r) => S(r.supplierName) },
@@ -84,6 +100,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Target PPM', get: (r) => S(r.target_ppm) },
       { label: 'Status', get: (r) => S(r.status) },
       { label: 'Quarter', get: (r) => S(r.quarter) },
+      DOC_COLUMN,
     ],
     delivery_performance: [
       { label: 'Supplier', get: (r) => S(r.supplierName) },
@@ -94,6 +111,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Target OTD %', get: (r) => S(r.target_otd) + '%' },
       { label: 'Status', get: (r) => S(r.status) },
       { label: 'Quarter', get: (r) => S(r.quarter) },
+      DOC_COLUMN,
     ],
     supplier_audits: [
       { label: 'ID', get: (r) => S(r.display_id) },
@@ -108,6 +126,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Minor NCs', get: (r) => S(r.minor_ncs) },
       { label: 'CAPA Status', get: (r) => S(r.capa_status) },
       { label: 'Next Audit Due', get: (r) => fmtDate(r.next_audit_due) },
+      DOC_COLUMN,
     ],
     apqp_parts: [
       { label: 'Supplier', get: (r) => S(r.supplierName) },
@@ -121,6 +140,7 @@ export function getColumnDefs(type: RecordType): ColumnDef[] {
       { label: 'Run at Rate (P/A)', get: (r) => `${fmtDate(r.run_at_rate_plan)} / ${fmtDate(r.run_at_rate_actual)}` },
       { label: 'SOP (P/A)', get: (r) => `${fmtDate(r.sop_plan)} / ${fmtDate(r.sop_actual)}` },
       { label: 'Status', get: (r) => S(r.status) },
+      DOC_COLUMN,
     ],
   };
   return defs[type];

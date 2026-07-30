@@ -18,6 +18,7 @@ export interface Supplier {
   onboard_date: string | null;
   sqe_owner: string | null;
   status: string | null;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -34,6 +35,7 @@ export interface TechnicalReview {
   action_items: string | null;
   target_closure: string | null;
   actual_closure: string | null;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -52,6 +54,7 @@ export interface QualityComplaint {
   target_close: string | null;
   actual_close: string | null;
   status: string | null;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -62,6 +65,7 @@ export interface MonthlyPPM {
   qty_received: number;
   qty_rejected: number;
   target_ppm: number;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -72,6 +76,7 @@ export interface DeliveryPerformance {
   orders_due: number;
   orders_on_time: number;
   target_otd: number;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -89,6 +94,7 @@ export interface SupplierAudit {
   capa_due: string | null;
   capa_status: string | null;
   next_audit_due: string | null;
+  doc_url: string | null;
   created_at: string;
 }
 
@@ -111,6 +117,37 @@ export interface ApqpPart {
   sop_plan: string | null;
   sop_actual: string | null;
   status: string | null;
+  doc_url: string | null;
+  created_at: string;
+}
+
+export interface Objective {
+  id: string;
+  display_id: string;
+  title: string;
+  weight_pct: number | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface KeyResult {
+  id: string;
+  display_id: string;
+  objective_id: string;
+  title: string;
+  weight_pct: number | null;
+  target_general: string | null;
+  target_challenge: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface OkrMonthlyEntry {
+  id: string;
+  key_result_id: string;
+  month: string;
+  actual: string | null;
+  score: number | null;
   created_at: string;
 }
 

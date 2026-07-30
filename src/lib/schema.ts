@@ -1,6 +1,6 @@
 import type { RecordType } from './types';
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'date' | 'month' | 'number' | 'supplier';
+export type FieldType = 'text' | 'textarea' | 'select' | 'date' | 'month' | 'number' | 'supplier' | 'url' | 'objective';
 
 export interface FieldDef {
   key: string;
@@ -28,6 +28,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'onboard_date', label: 'Onboard Date', type: 'date' },
       { key: 'sqe_owner', label: 'SQE Owner', type: 'text' },
       { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Probation', 'Inactive'] },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   technical_reviews: {
@@ -43,6 +44,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'action_items', label: 'Action Items', type: 'textarea' },
       { key: 'target_closure', label: 'Target Closure', type: 'date' },
       { key: 'actual_closure', label: 'Actual Closure', type: 'date' },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   quality_complaints: {
@@ -60,6 +62,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'target_close', label: 'Target Close', type: 'date' },
       { key: 'actual_close', label: 'Actual Close', type: 'date' },
       { key: 'status', label: '8D Status', type: 'select', options: ['Open', 'In Progress', 'Closed'] },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   monthly_ppm: {
@@ -70,6 +73,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'qty_received', label: 'Qty Received', type: 'number' },
       { key: 'qty_rejected', label: 'Qty Rejected', type: 'number' },
       { key: 'target_ppm', label: 'Target PPM', type: 'number' },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   delivery_performance: {
@@ -80,13 +84,14 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'orders_due', label: 'Orders Due', type: 'number' },
       { key: 'orders_on_time', label: 'Orders On-Time', type: 'number' },
       { key: 'target_otd', label: 'Target OTD %', type: 'number' },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   supplier_audits: {
     label: 'Audit',
     fields: [
       { key: 'supplier_id', label: 'Supplier', type: 'supplier' },
-      { key: 'audit_type', label: 'Audit Type', type: 'select', options: ['System Audit (IATF 16949)', 'System Audit (ISO 9001)', 'Process Audit', 'Product Audit', 'MQS Audit'] },
+      { key: 'audit_type', label: 'Audit Type', type: 'select', options: ['System Audit (IATF 16949)', 'System Audit (ISO 9001)', 'Process Audit', 'Product Audit', 'MQS Audit', 'CQI-X Audit', 'Safe Launch Audit', 'VDA 6.3 Audit'] },
       { key: 'planned_date', label: 'Planned Date', type: 'date' },
       { key: 'actual_date', label: 'Actual Date', type: 'date' },
       { key: 'auditor', label: 'Auditor', type: 'text' },
@@ -96,6 +101,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'capa_due', label: 'CAPA Due', type: 'date' },
       { key: 'capa_status', label: 'CAPA Status', type: 'select', options: ['Open', 'In Progress', 'Closed'] },
       { key: 'next_audit_due', label: 'Next Audit Due', type: 'date' },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
   apqp_parts: {
@@ -117,6 +123,7 @@ export const SCHEMAS: Record<RecordType, RecordSchema> = {
       { key: 'sop_plan', label: 'SOP — Plan', type: 'date' },
       { key: 'sop_actual', label: 'SOP — Actual', type: 'date' },
       { key: 'status', label: 'Current Status', type: 'select', options: ['Not Started', 'On Track', 'At Risk', 'Delayed', 'Complete'] },
+      { key: 'doc_url', label: 'Document Link', type: 'url' },
     ],
   },
 };
@@ -156,7 +163,7 @@ export const DATA_TAB_TYPES: RecordType[] = [
   'apqp_parts',
 ];
 
-export type TabKey = RecordType | 'overview' | 'monthly_report' | 'users';
+export type TabKey = RecordType | 'overview' | 'okr' | 'monthly_report' | 'users';
 
 export const TABLIST: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },

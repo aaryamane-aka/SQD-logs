@@ -280,6 +280,18 @@ export function getAvailableMonths(data: DashboardData): string[] {
   return Array.from(set).sort();
 }
 
+export interface OkrSlideObjective {
+  title: string;
+  weightPct: number | null;
+  rows: { title: string; weightPct: number | null; score: number | null }[];
+}
+
+export interface OkrSlideData {
+  monthLabel: string;
+  objectives: OkrSlideObjective[];
+  totalScore: number | null;
+}
+
 export type ReportSlide =
   | { kind: 'title'; monthLabel: string }
   | {
@@ -292,6 +304,7 @@ export type ReportSlide =
       criticalCount: number;
       auditsCount: number;
     }
+  | ({ kind: 'okrSummary' } & OkrSlideData)
   | {
       kind: 'scorecardChart';
       monthLabel: string;
@@ -317,8 +330,16 @@ export type ReportSlide =
     }
   | { kind: 'closing' };
 
-// Ported 1:1 from the prototype's buildReportSlides.
-export function buildReportSlides(month: string, suppliers: Supplier[], data: DashboardData): ReportSlide[] {
+// Ported 1:1 from the prototype's buildReportSlides. `okrSlide` is optional —
+// built by the caller (via lib/okr.ts, kept out of this module to avoid a
+// circular import) and only passed for internal-role viewers, since OKR
+// data is internal-only.
+export function buildReportSlides(
+  month: string,
+  suppliers: Supplier[],
+  data: DashboardData,
+  okrSlide?: OkrSlideData | null
+): ReportSlide[] {
   if (!month) return [];
   const monthPPM = data.monthly_ppm.filter((r) => r.month === month);
   const monthOTD = data.delivery_performance.filter((r) => r.month === month);
@@ -346,6 +367,10 @@ export function buildReportSlides(month: string, suppliers: Supplier[], data: Da
     criticalCount: monthComplaints.filter((c) => c.severity === 'Critical').length,
     auditsCount: monthAudits.length,
   });
+
+  if (okrSlide) {
+    slides.push({ kind: 'okrSummary', ...okrSlide });
+  }
 
   const bars = rawScorecard.map((sc) => {
     const v = sc.overallScore == null ? 0 : Math.max(2, Math.round(sc.overallScore));

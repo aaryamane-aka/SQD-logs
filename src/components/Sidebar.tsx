@@ -1,5 +1,7 @@
 import { TABLIST, type TabKey } from '../lib/schema';
 import type { Profile, Supplier } from '../lib/types';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface Props {
   activeTab: TabKey;
@@ -14,35 +16,44 @@ export function Sidebar({ activeTab, onTabChange, profile, suppliers, onSignOut 
 
   const tabs = [...TABLIST];
   if (profile.user_role === 'internal') {
+    tabs.splice(1, 0, { key: 'okr', label: 'OKR' });
     tabs.push({ key: 'users', label: 'Users' });
   }
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-title">SQD Supplier
+    <div className="flex w-[230px] shrink-0 flex-col gap-1 bg-brand-sidebar px-4 py-6 text-[#dbe4f5]">
+      <div className="mb-5 px-2 text-[15px] font-bold leading-tight text-white">
+        SQD Supplier OKR
         <br />
         Dashboard
       </div>
       {tabs.map((t) => (
         <div
           key={t.key}
-          className={`sidebar-tab${t.key === activeTab ? ' active' : ''}`}
           onClick={() => onTabChange(t.key)}
+          className={cn(
+            'cursor-pointer rounded-md px-3 py-2.5 text-[13.5px] font-medium text-[#c3d0e8]',
+            t.key === activeTab && 'bg-brand-sidebarActive text-white'
+          )}
         >
           {t.label}
         </div>
       ))}
 
-      <div className="sidebar-footer">
-        <div className="sidebar-label">Signed in as</div>
-        <div className="sidebar-user">
+      <div className="mt-auto border-t border-[#26365c] pt-4">
+        <div className="mb-2 text-[11px] uppercase tracking-wide text-[#8ea3c9]">Signed in as</div>
+        <div className="text-[12.5px] leading-relaxed break-words">
           {profile.email}
           <br />
           {profile.user_role === 'internal' ? 'Internal SQD' : boundSupplier ? `Supplier — ${boundSupplier.name}` : 'Supplier — unassigned'}
         </div>
-        <button className="sidebar-signout" onClick={onSignOut}>
+        <Button
+          variant="outline"
+          className="mt-2.5 w-full border-[#2c4372] bg-transparent text-[#dbe4f5] hover:bg-brand-sidebarActive hover:text-white"
+          onClick={onSignOut}
+        >
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -49,7 +49,7 @@ export function UsersTab({ suppliers }: Props) {
       <div className="notice notice-info">
         Assign each signed-up account an Internal SQD or Supplier role. Supplier accounts also need binding to their company record before they can see any data.
       </div>
-      {error && <div className="login-error">{error}</div>}
+      {error && <div className="mb-3.5 rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[12.5px] text-destructive">{error}</div>}
       {loading ? (
         <div className="empty-state">Loading…</div>
       ) : profiles.length === 0 ? (
@@ -69,7 +69,12 @@ export function UsersTab({ suppliers }: Props) {
                 <tr key={p.id}>
                   <td>{p.email}</td>
                   <td>
-                    <select value={p.user_role} disabled={savingId === p.id} onChange={(e) => setRole(p.id, e.target.value)}>
+                    <select
+                      className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+                      value={p.user_role}
+                      disabled={savingId === p.id}
+                      onChange={(e) => setRole(p.id, e.target.value)}
+                    >
                       <option value="supplier">Supplier</option>
                       <option value="internal">Internal</option>
                     </select>
@@ -78,7 +83,12 @@ export function UsersTab({ suppliers }: Props) {
                     {p.user_role === 'internal' ? (
                       <span style={{ color: 'var(--text-secondary)' }}>—</span>
                     ) : (
-                      <select value={p.supplier_id || ''} disabled={savingId === p.id} onChange={(e) => setSupplier(p.id, e.target.value)}>
+                      <select
+                        className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm"
+                        value={p.supplier_id || ''}
+                        disabled={savingId === p.id}
+                        onChange={(e) => setSupplier(p.id, e.target.value)}
+                      >
                         <option value="">Unassigned</option>
                         {suppliers.map((s) => (
                           <option key={s.id} value={s.id}>

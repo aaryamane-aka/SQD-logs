@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DataTable, type DataTableRow } from '../components/DataTable';
 import { RecordModal } from '../components/RecordModal';
+import { Button } from '@/components/ui/button';
 import { ROLE_PERMS, SCHEMAS, SUPPLIER_EDITABLE_FIELDS } from '../lib/schema';
 import { getColumnDefs, getEnrichedRows } from '../lib/tableColumns';
 import type { DashboardData } from '../lib/compute';
@@ -94,11 +95,7 @@ export function DataTab({ type, data, profile, suppliers, onInsert, onUpdate, on
     <div>
       <div className="main-header">
         <div className="main-title">{SCHEMAS_LABEL(type)}</div>
-        {canAdd && !needsSuppliersFirst && (
-          <button className="btn btn-primary" onClick={openAdd}>
-            Add {schema.label}
-          </button>
-        )}
+        {canAdd && !needsSuppliersFirst && <Button onClick={openAdd}>Add {schema.label}</Button>}
       </div>
 
       {needsSuppliersFirst && (

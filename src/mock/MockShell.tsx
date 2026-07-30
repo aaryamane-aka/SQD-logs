@@ -4,8 +4,11 @@ import { DATA_TAB_TYPES, type TabKey } from '../lib/schema';
 import { OverviewTab } from '../tabs/OverviewTab';
 import { DataTab } from '../tabs/DataTab';
 import { ReportTab } from '../tabs/ReportTab';
+import { OkrTab } from '../tabs/OkrTab';
 import type { Profile, RecordType, UserRole } from '../lib/types';
 import { useMockDashboardData } from './useMockDashboardData';
+import { useMockOkrData } from './useMockOkrData';
+import { computeTotalForMonth } from '../lib/okr';
 
 // Preview harness for local UI testing (VITE_MOCK_MODE=true) — lets you flip
 // between Internal/Supplier views without a real Supabase login.
@@ -14,6 +17,7 @@ export function MockShell() {
   const [mySupplierId, setMySupplierId] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const { data, insert, update, remove } = useMockDashboardData();
+  const okr = useMockOkrData();
 
   const profile: Profile = { id: 'mock-user', email: 'preview@example.com', user_role: role, supplier_id: role === 'supplier' ? mySupplierId || null : null };
   const contentBlocked = role === 'supplier' && !mySupplierId;
@@ -32,6 +36,12 @@ export function MockShell() {
           apqp_parts: data.apqp_parts.filter((r) => (r.supplier_name || '').trim().toLowerCase() === myName),
         }
       : data;
+
+  const okrMonths = Array.from(new Set(okr.monthlyEntries.map((e) => e.month))).sort();
+  const latestOkrMonth = okrMonths[okrMonths.length - 1] || null;
+  const okrSummary = latestOkrMonth
+    ? { month: latestOkrMonth, score: computeTotalForMonth(okr.keyResults, okr.monthlyEntries, latestOkrMonth) }
+    : null;
 
   return (
     <div>
@@ -64,9 +74,36 @@ export function MockShell() {
           {contentBlocked ? (
             <div className="notice notice-info">Select which supplier you are in the top bar to see your data.</div>
           ) : activeTab === 'overview' ? (
-            <OverviewTab data={scopedData} suppliers={visibleSuppliers} />
+            <OverviewTab
+              data={scopedData}
+              suppliers={visibleSuppliers}
+              isInternal={role === 'internal'}
+              okrSummary={okrSummary}
+              onViewOkr={() => setActiveTab('okr')}
+            />
           ) : activeTab === 'monthly_report' ? (
-            <ReportTab data={scopedData} suppliers={visibleSuppliers} />
+            <ReportTab
+              data={scopedData}
+              suppliers={visibleSuppliers}
+              okrObjectives={role === 'internal' ? okr.objectives : undefined}
+              okrKeyResults={role === 'internal' ? okr.keyResults : undefined}
+              okrMonthlyEntries={role === 'internal' ? okr.monthlyEntries : undefined}
+            />
+          ) : activeTab === 'okr' ? (
+            role === 'internal' ? (
+              <OkrTab
+                objectives={okr.objectives}
+                keyResults={okr.keyResults}
+                monthlyEntries={okr.monthlyEntries}
+                insertObjective={okr.insertObjective}
+                updateObjective={okr.updateObjective}
+                removeObjective={okr.removeObjective}
+                insertKeyResult={okr.insertKeyResult}
+                updateKeyResult={okr.updateKeyResult}
+                removeKeyResult={okr.removeKeyResult}
+                upsertMonthlyEntry={okr.upsertMonthlyEntry}
+              />
+            ) : null
           ) : activeTab === 'users' ? (
             <div className="empty-state">Users admin isn't available in preview mode.</div>
           ) : DATA_TAB_TYPES.includes(activeTab as RecordType) ? (

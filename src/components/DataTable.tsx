@@ -1,6 +1,10 @@
+import type { ReactNode } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+
 export interface DataTableRow {
   id: string;
-  cells: (string | number)[];
+  cells: ReactNode[];
   canEdit: boolean;
   canDelete: boolean;
   onEdit: () => void;
@@ -15,42 +19,44 @@ interface Props {
 
 export function DataTable({ columns, rows, emptyMessage }: Props) {
   if (rows.length === 0) {
-    return <div className="empty-state">{emptyMessage}</div>;
+    return <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">{emptyMessage}</div>;
   }
 
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
+    <div className="rounded-lg border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
             {columns.map((c) => (
-              <th key={c}>{c}</th>
+              <TableHead key={c}>{c}</TableHead>
             ))}
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
+            <TableHead />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row) => (
-            <tr key={row.id}>
+            <TableRow key={row.id}>
               {row.cells.map((cell, i) => (
-                <td key={i}>{cell}</td>
+                <TableCell key={i} className="max-w-[220px] overflow-hidden text-ellipsis">
+                  {cell}
+                </TableCell>
               ))}
-              <td style={{ textAlign: 'right' }}>
+              <TableCell className="text-right">
                 {row.canEdit && (
-                  <button className="btn-link" style={{ marginRight: 8 }} onClick={row.onEdit}>
+                  <Button variant="link" size="sm" className="h-auto p-0 mr-3" onClick={row.onEdit}>
                     Edit
-                  </button>
+                  </Button>
                 )}
                 {row.canDelete && (
-                  <button className="btn-link danger" onClick={row.onDelete}>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-destructive" onClick={row.onDelete}>
                     Delete
-                  </button>
+                  </Button>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

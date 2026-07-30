@@ -1,15 +1,40 @@
-import { buildPortfolioSummary, buildScorecard, scorecardToDisplay, type DashboardData } from '../lib/compute';
+import { buildPortfolioSummary, buildScorecard, scorecardToDisplay, fmtMonth, type DashboardData } from '../lib/compute';
 import type { Supplier } from '../lib/types';
+
+interface OkrSummary {
+  month: string;
+  score: number | null;
+}
 
 interface Props {
   data: DashboardData;
   suppliers: Supplier[];
+  isInternal?: boolean;
+  okrSummary?: OkrSummary | null;
+  onViewOkr?: () => void;
 }
 
-export function OverviewTab({ data, suppliers }: Props) {
+export function OverviewTab({ data, suppliers, isInternal, okrSummary, onViewOkr }: Props) {
   const raw = buildScorecard(suppliers, data);
   const scorecard = raw.map(scorecardToDisplay);
   const portfolio = buildPortfolioSummary(raw);
+
+  const okrCard = isInternal && okrSummary && (
+    <div
+      className="card"
+      style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+    >
+      <div>
+        <div className="stat-label">OKR Total Score — {fmtMonth(okrSummary.month)}</div>
+        <div className="stat-value">{okrSummary.score == null ? '—' : okrSummary.score.toFixed(2)}</div>
+      </div>
+      {onViewOkr && (
+        <button className="btn" onClick={onViewOkr}>
+          View full OKR breakdown →
+        </button>
+      )}
+    </div>
+  );
 
   if (scorecard.length === 0) {
     return (
@@ -17,6 +42,7 @@ export function OverviewTab({ data, suppliers }: Props) {
         <div className="main-header">
           <div className="main-title">Overview</div>
         </div>
+        {okrCard}
         <div className="empty-state large">
           <div className="title">No suppliers yet</div>
           <div>Go to the Suppliers tab to add your first supplier and start tracking quality data.</div>
@@ -30,6 +56,8 @@ export function OverviewTab({ data, suppliers }: Props) {
       <div className="main-header">
         <div className="main-title">Overview</div>
       </div>
+
+      {okrCard}
 
       <div className="stat-grid">
         <div className="card">

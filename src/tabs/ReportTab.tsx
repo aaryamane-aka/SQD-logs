@@ -1,20 +1,42 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { buildReportSlides, fmtMonth, getAvailableMonths, type DashboardData } from '../lib/compute';
-import type { Supplier } from '../lib/types';
+import { buildOkrSlideData } from '../lib/okr';
+import { downloadReportPptx } from '../lib/pptxExport';
+import type { KeyResult, Objective, OkrMonthlyEntry, Supplier } from '../lib/types';
 
 interface Props {
   data: DashboardData;
   suppliers: Supplier[];
+  okrObjectives?: Objective[];
+  okrKeyResults?: KeyResult[];
+  okrMonthlyEntries?: OkrMonthlyEntry[];
 }
 
-export function ReportTab({ data, suppliers }: Props) {
+export function ReportTab({ data, suppliers, okrObjectives, okrKeyResults, okrMonthlyEntries }: Props) {
   const availableMonthKeys = useMemo(() => getAvailableMonths(data), [data]);
   const [month, setMonth] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
-  const slides = useMemo(() => buildReportSlides(month, suppliers, data), [month, suppliers, data]);
+  const okrSlideData = useMemo(
+    () =>
+      okrObjectives && okrKeyResults && okrMonthlyEntries
+        ? buildOkrSlideData(okrObjectives, okrKeyResults, okrMonthlyEntries, month)
+        : null,
+    [okrObjectives, okrKeyResults, okrMonthlyEntries, month]
+  );
+  const slides = useMemo(() => buildReportSlides(month, suppliers, data, okrSlideData), [month, suppliers, data, okrSlideData]);
   const idx = Math.min(slideIndex, Math.max(0, slides.length - 1));
   const slide = slides[idx];
+
+  async function handleDownload() {
+    setExporting(true);
+    try {
+      await downloadReportPptx(slides, month || 'report');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div>
@@ -70,6 +92,50 @@ export function ReportTab({ data, suppliers }: Props) {
                       <SlideStat label="Critical Complaints" value={slide.criticalCount} color="#ff9c9c" />
                       <SlideStat label="Audits This Month" value={slide.auditsCount} />
                     </div>
+                  </div>
+                )}
+
+                {slide.kind === 'okrSummary' && (
+                  <div style={{ width: '100%', overflowY: 'auto' }}>
+                    <div className="slide-eyebrow">OKR Summary — {slide.monthLabel}</div>
+                    <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: '4px 8px', background: '#1f8a5c', color: '#fff' }}>Objective / Key Result</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px', background: '#1f8a5c', color: '#fff', width: 70 }}>Weight</th>
+                          <th style={{ textAlign: 'right', padding: '4px 8px', background: '#1f8a5c', color: '#fff', width: 70 }}>Score</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {slide.objectives.map((obj) => (
+                          <Fragment key={obj.title}>
+                            <tr style={{ background: '#152847' }}>
+                              <td style={{ padding: '4px 8px', fontWeight: 700 }}>{obj.title}</td>
+                              <td style={{ padding: '4px 8px', textAlign: 'right' }}>{obj.weightPct != null ? `${obj.weightPct}%` : ''}</td>
+                              <td></td>
+                            </tr>
+                            {obj.rows.map((row) => (
+                              <tr key={row.title}>
+                                <td style={{ padding: '3px 8px 3px 20px' }}>{row.title}</td>
+                                <td style={{ padding: '3px 8px', textAlign: 'right', color: '#8ea3c9' }}>
+                                  {row.weightPct != null ? `${row.weightPct}%` : '—'}
+                                </td>
+                                <td className="mono" style={{ padding: '3px 8px', textAlign: 'right' }}>
+                                  {row.score != null ? row.score.toFixed(2) : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </Fragment>
+                        ))}
+                        <tr style={{ borderTop: '2px solid #2c4372', fontWeight: 700 }}>
+                          <td style={{ padding: '6px 8px' }}>Total</td>
+                          <td></td>
+                          <td className="mono" style={{ padding: '6px 8px', textAlign: 'right' }}>
+                            {slide.totalScore != null ? slide.totalScore.toFixed(2) : '—'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 )}
 
@@ -137,9 +203,9 @@ export function ReportTab({ data, suppliers }: Props) {
                 <button className="btn" onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}>
                   ← Previous
                 </button>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  Ask me to export this report as a PowerPoint file when you're ready.
-                </div>
+                <button className="btn btn-primary" onClick={handleDownload} disabled={exporting}>
+                  {exporting ? 'Preparing…' : 'Download .pptx'}
+                </button>
                 <button className="btn" onClick={() => setSlideIndex((i) => Math.min(slides.length - 1, i + 1))}>
                   Next →
                 </button>

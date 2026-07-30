@@ -1,5 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
 export function Login() {
   const { signIn, signUp } = useAuth();
@@ -30,51 +34,53 @@ export function Login() {
   }
 
   return (
-    <div className="login-wrap">
-      <div className="login-card">
-        <div className="login-title">SQD Supplier Dashboard</div>
-        <div className="login-sub">{mode === 'signin' ? 'Sign in to continue' : 'Create an account'}</div>
-        {error && <div className="login-error">{error}</div>}
-        {info && <div className="notice notice-info">{info}</div>}
-        <form onSubmit={onSubmit}>
-          <div className="login-field">
-            <label htmlFor="email">Email</label>
-            <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Card className="w-full max-w-sm p-9">
+        <CardContent className="p-0">
+          <div className="mb-1 text-xl font-bold">SQD Supplier OKR Dashboard</div>
+          <div className="mb-5 text-sm text-muted-foreground">{mode === 'signin' ? 'Sign in to continue' : 'Create an account'}</div>
+          {error && <div className="mb-3.5 rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[12.5px] text-destructive">{error}</div>}
+          {info && <div className="mb-3.5 rounded-md border border-primary/30 bg-primary/10 px-4 py-3 text-[13.5px] text-primary">{info}</div>}
+          <form onSubmit={onSubmit}>
+            <div className="mb-3.5 flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+            </div>
+            <div className="mb-3.5 flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-[12.5px] text-muted-foreground">
+            {mode === 'signin' ? (
+              <>
+                New here?{' '}
+                <button type="button" className="font-semibold text-primary" onClick={() => setMode('signup')}>
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button type="button" className="font-semibold text-primary" onClick={() => setMode('signin')}>
+                  Sign in
+                </button>
+              </>
+            )}
           </div>
-          <div className="login-field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={busy}>
-            {busy ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
-          </button>
-        </form>
-        <div className="login-switch">
-          {mode === 'signin' ? (
-            <>
-              New here?{' '}
-              <button type="button" onClick={() => setMode('signup')}>
-                Create an account
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button type="button" onClick={() => setMode('signin')}>
-                Sign in
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

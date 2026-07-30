@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import type { FieldDef } from '../lib/schema';
 import type { Supplier } from '../lib/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Props {
   title: string;
   fields: FieldDef[];
   initialValues: Record<string, unknown>;
   suppliers: Supplier[];
+  objectives?: { id: string; title: string }[];
   onSave: (values: Record<string, unknown>) => Promise<void> | void;
   onCancel: () => void;
 }
 
-export function RecordModal({ title, fields, initialValues, suppliers, onSave, onCancel }: Props) {
+export function RecordModal({ title, fields, initialValues, suppliers, objectives, onSave, onCancel }: Props) {
   const [values, setValues] = useState<Record<string, unknown>>(initialValues);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,40 +46,65 @@ export function RecordModal({ title, fields, initialValues, suppliers, onSave, o
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-title">{title}</div>
-        {error && <div className="login-error">{error}</div>}
-        <div className="modal-grid">
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {error && <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+        <div className="grid grid-cols-2 gap-4">
           {fields.map((f) => (
-            <div key={f.key} className={`field${f.type === 'textarea' ? ' span-2' : ''}`}>
-              <label>{f.label}</label>
+            <div key={f.key} className={`flex flex-col gap-1.5 ${f.type === 'textarea' ? 'col-span-2' : ''}`}>
+              <Label>{f.label}</Label>
               {f.type === 'select' && (
-                <select value={(values[f.key] as string) ?? ''} onChange={(e) => setField(f.key, e.target.value)}>
-                  <option value="">Select…</option>
-                  {(f.options || []).map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
+                <Select value={(values[f.key] as string) || undefined} onValueChange={(v) => setField(f.key, v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(f.options || []).map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
               {f.type === 'supplier' && (
-                <select value={(values[f.key] as string) ?? ''} onChange={(e) => setField(f.key, e.target.value)}>
-                  <option value="">Select supplier</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <Select value={(values[f.key] as string) || undefined} onValueChange={(v) => setField(f.key, v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {f.type === 'objective' && (
+                <Select value={(values[f.key] as string) || undefined} onValueChange={(v) => setField(f.key, v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select objective" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(objectives || []).map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
               {f.type === 'textarea' && (
-                <textarea value={(values[f.key] as string) ?? ''} onChange={(e) => setField(f.key, e.target.value)} />
+                <Textarea value={(values[f.key] as string) ?? ''} onChange={(e) => setField(f.key, e.target.value)} />
               )}
-              {(f.type === 'text' || f.type === 'date' || f.type === 'month' || f.type === 'number') && (
-                <input
+              {(f.type === 'text' || f.type === 'date' || f.type === 'month' || f.type === 'number' || f.type === 'url') && (
+                <Input
                   type={f.type}
+                  placeholder={f.type === 'url' ? 'https://…' : undefined}
                   value={(values[f.key] as string | number) ?? ''}
                   onChange={(e) => setField(f.key, e.target.value)}
                 />
@@ -80,15 +112,15 @@ export function RecordModal({ title, fields, initialValues, suppliers, onSave, o
             </div>
           ))}
         </div>
-        <div className="modal-actions">
-          <button className="btn" onClick={onCancel} disabled={saving}>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel} disabled={saving}>
             Cancel
-          </button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
